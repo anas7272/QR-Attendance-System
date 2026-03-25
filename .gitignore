@@ -1,8 +1,0 @@
-credentials.json
-.env
-attendance.db
-*.pyc
-__pycache__/
-venv/
-*.log
-attendance_qr.png
