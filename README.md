@@ -266,3 +266,22 @@ gspread — Google Sheets API
 qrcode — QR code generation
 SQLite — Local database
 fast2sms — SMS OTP delivery
+
+
+## 👨‍💻 Developer
+
+## 👨‍💻 Developer
+
+**Muhammad Anas**
+- 📧 Email: anas.mleng@email.com
+- 📱 Phone: +91-7067043139
+- 🐙 GitHub: [anas7272](https://github.com/anas7272)
+- 💼 LinkedIn: [Muhammad Anas](https://www.linkedin.com/in/muhammad-anas-15770327a)
+
+> Built and designed by **Muhammad Anas** — All rights reserved.
+
+---
+
+> Built and designed by **Your Name** — All rights reserved.
+
+---
