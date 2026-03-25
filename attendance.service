@@ -1,0 +1,39 @@
+# /etc/systemd/system/attendance.service
+# ────────────────────────────────────────────────────────────────────────────
+# This keeps the attendance app running 24/7, auto-restarts on crash/reboot
+# ────────────────────────────────────────────────────────────────────────────
+#
+# INSTALL:
+#   1. Copy this file to /etc/systemd/system/attendance.service
+#   2. sudo systemctl daemon-reload
+#   3. sudo systemctl enable attendance
+#   4. sudo systemctl start attendance
+#   5. sudo systemctl status attendance
+#
+# LOGS:
+#   sudo journalctl -u attendance -f
+# ────────────────────────────────────────────────────────────────────────────
+
+[Unit]
+Description=QR Attendance System (Flask + Gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/qr-attendance
+EnvironmentFile=/home/ubuntu/qr-attendance/.env
+ExecStart=/home/ubuntu/qr-attendance/venv/bin/gunicorn \
+          --workers 3 \
+          --bind 127.0.0.1:5000 \
+          --timeout 60 \
+          --access-logfile /home/ubuntu/qr-attendance/access.log \
+          --error-logfile  /home/ubuntu/qr-attendance/error.log \
+          app:app
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

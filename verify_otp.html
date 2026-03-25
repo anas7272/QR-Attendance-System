@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Verify OTP</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh; background: #0d1117;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  overflow: hidden; position: relative;
+}
+body::before {
+  content: ''; position: absolute; width: 500px; height: 500px;
+  background: #f59e0b; border-radius: 50%; filter: blur(130px);
+  opacity: 0.06; top: -150px; left: 50%; transform: translateX(-50%);
+}
+.card {
+  background: rgba(255,255,255,0.04); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 28px;
+  padding: 40px 32px; width: 100%; max-width: 400px;
+  z-index: 1; box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+  animation: up .4s ease;
+}
+@keyframes up { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+
+.icon-wrap {
+  width:68px;height:68px;margin:0 auto 18px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  border-radius:20px;display:flex;align-items:center;justify-content:center;
+  font-size:32px;box-shadow:0 8px 24px rgba(245,158,11,0.35);
+}
+h2 { font-size:23px;font-weight:800;color:white;text-align:center;margin-bottom:6px; }
+.sub { color:rgba(255,255,255,0.4);font-size:13px;text-align:center;margin-bottom:24px;line-height:1.6; }
+.ph  { color:#fbbf24;font-weight:700; }
+
+/* SMS fail banner */
+.sms-fail {
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+  border-radius:12px;padding:12px 14px;margin-bottom:16px;
+  font-size:12px;color:#fca5a5;line-height:1.6;
+}
+.sms-fail strong { color:#f87171; }
+
+/* Master OTP hint */
+.master-hint {
+  background:rgba(245,158,11,0.08);border:1.5px dashed rgba(245,158,11,0.35);
+  border-radius:12px;padding:14px 16px;margin-bottom:20px;
+  text-align:center;
+}
+.master-hint .label { color:rgba(245,158,11,0.6);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px; }
+.master-hint .code  { font-size:34px;font-weight:900;color:#f59e0b;letter-spacing:8px; }
+.master-hint .note  { color:rgba(245,158,11,0.5);font-size:10px;margin-top:4px; }
+
+/* Debug OTP */
+.debug-box {
+  background:rgba(6,214,160,0.08);border:1.5px dashed rgba(6,214,160,0.35);
+  border-radius:12px;padding:14px;margin-bottom:20px;text-align:center;
+}
+.debug-box .d-label { color:rgba(6,214,160,0.6);font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:5px; }
+.debug-box .d-code  { font-size:32px;font-weight:900;color:#06d6a0;letter-spacing:8px; }
+
+/* 6 digit input */
+.otp-row { display:flex;gap:10px;justify-content:center;margin-bottom:24px; }
+.otp-row input {
+  width:48px;height:58px;text-align:center;
+  background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.12);
+  border-radius:14px;font-size:26px;font-weight:900;color:white;outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  transition:border-color .15s,background .15s;
+}
+.otp-row input:focus { border-color:#f59e0b;background:rgba(245,158,11,0.1); }
+
+.btn {
+  width:100%;padding:17px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:white;border:none;border-radius:16px;
+  font-size:16px;font-weight:700;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  box-shadow:0 6px 24px rgba(245,158,11,0.35);
+  transition:opacity .2s,transform .15s;
+}
+.btn:hover { opacity:.9;transform:translateY(-1px); }
+.btn-resend {
+  width:100%;padding:14px;margin-top:10px;
+  background:transparent;color:rgba(255,255,255,0.4);
+  border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  transition:border-color .2s,color .2s;
+}
+.btn-resend:not(:disabled):hover { border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.7); }
+.btn-resend:disabled { opacity:.4;cursor:not-allowed; }
+
+.error   { background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:12px;padding:12px;font-size:13px;margin-bottom:16px;text-align:center; }
+.success { background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;border-radius:12px;padding:12px;font-size:13px;margin-bottom:16px;text-align:center; }
+
+.back { display:block;text-align:center;margin-top:18px;color:rgba(255,255,255,0.25);font-size:13px;text-decoration:none; }
+.back:hover { color:rgba(255,255,255,0.5); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="text-align:center">
+    <div class="icon-wrap">🔐</div>
+  </div>
+  <h2>Enter OTP</h2>
+  <p class="sub">
+    Code sent to <span class="ph">📱 {{ phone }}</span>
+    {% if name %}<br>Hello, <strong style="color:white">{{ name }}</strong>!{% endif %}
+  </p>
+
+  {% if error   %}<div class="error">⚠️ {{ error }}</div>{% endif %}
+  {% if message %}<div class="success">✅ {{ message }}</div>{% endif %}
+
+ 
+
+ 
+
+  
+
+  <form method="POST" action="/verify-otp" id="otp-form">
+    <input type="hidden" name="phone"   value="{{ phone }}">
+    <input type="hidden" name="name"    value="{{ name }}">
+    <input type="hidden" name="purpose" value="{{ purpose }}">
+    <input type="hidden" name="otp"     id="otp-combined">
+    <div class="otp-row">
+      {% for _ in range(6) %}
+      <input type="tel" maxlength="1" class="digit" inputmode="numeric"
+             {% if loop.first %}autofocus{% endif %}>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn">Verify & Continue →</button>
+  </form>
+
+  <form method="POST" action="/resend-otp">
+    <input type="hidden" name="phone"   value="{{ phone }}">
+    <input type="hidden" name="name"    value="{{ name }}">
+    <input type="hidden" name="purpose" value="{{ purpose }}">
+    <button type="submit" class="btn-resend" id="rb" disabled>
+      Resend OTP (<span id="cd">30</span>s)
+    </button>
+  </form>
+
+  <!-- Always show master OTP reminder at bottom -->
+
+
+  <a href="/start" class="back">← Back</a>
+</div>
+
+<script>
+const digits = [...document.querySelectorAll('.digit')];
+const combined = document.getElementById('otp-combined');
+
+function sync(){ combined.value = digits.map(d=>d.value).join(''); }
+
+digits.forEach((inp,i)=>{
+  inp.addEventListener('input', e=>{
+    e.target.value = e.target.value.replace(/\D/,'').slice(-1);
+    if(e.target.value && i<5) digits[i+1].focus();
+    sync();
+    if(digits.every(d=>d.value))
+      setTimeout(()=>document.getElementById('otp-form').submit(), 250);
+  });
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Backspace' && !inp.value && i>0) digits[i-1].focus();
+  });
+  inp.addEventListener('paste', e=>{
+    const p=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+    if(p.length===6){ digits.forEach((d,j)=>d.value=p[j]||''); sync(); digits[5].focus(); }
+    e.preventDefault();
+  });
+});
+
+let s=30, cd=document.getElementById('cd'), rb=document.getElementById('rb');
+const t=setInterval(()=>{
+  s--; cd.textContent=s;
+  if(s<=0){ clearInterval(t); rb.disabled=false; rb.innerHTML='🔄 Resend OTP'; }
+},1000);
+</script>
+</body>
+</html>

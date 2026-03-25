@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Attendance — {{ name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  background: #0d1117;
+  padding: 24px 18px 40px;
+  position: relative; overflow-x: hidden;
+}
+body::before {
+  content:''; position:fixed; width:600px; height:600px;
+  border-radius:50%; filter:blur(130px); opacity:0.08;
+  top:-200px; left:50%; transform:translateX(-50%);
+  background: {% if next_action=='checkin' %}#10b981{% elif next_action=='checkout' %}#ef4444{% else %}#3b82f6{% endif %};
+  pointer-events:none;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; max-width: 440px; margin-left: auto; margin-right: auto;
+}
+.user-info .hi  { color: rgba(255,255,255,0.4); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.user-info .nm  { color: white; font-size: 20px; font-weight: 800; }
+.logout-btn {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 20px;
+  text-decoration: none; font-size: 12px; font-weight: 600; transition: color 0.2s;
+}
+.logout-btn:hover { color: white; }
+
+/* ── LIVE CLOCK ── */
+.clock-wrap { text-align: center; margin-bottom: 32px; }
+#clock { font-size: 52px; font-weight: 900; color: white; letter-spacing: -2px; line-height: 1; }
+.date  { color: rgba(255,255,255,0.35); font-size: 14px; margin-top: 6px; }
+
+/* ── MAIN CARD ── */
+.card {
+  background: rgba(255,255,255,0.04); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 28px;
+  padding: 32px; max-width: 440px; margin: 0 auto 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+/* ── STATUS ── */
+.status-row {
+  display: flex; gap: 12px; margin-bottom: 28px;
+}
+.stat-box {
+  flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; padding: 16px 14px; text-align: center;
+}
+.stat-box .lbl { color: rgba(255,255,255,0.35); font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.stat-box .val { font-size: 18px; font-weight: 800; color: white; }
+.stat-box .val.empty { color: rgba(255,255,255,0.2); font-weight: 400; font-size: 14px; }
+.stat-box.in-box  { border-color: rgba(16,185,129,0.3); }
+.stat-box.out-box { border-color: rgba(239,68,68,0.3); }
+
+/* ── ACTION BUTTON ── */
+.btn-checkin {
+  width: 100%; padding: 22px;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white; border: none; border-radius: 20px;
+  font-size: 20px; font-weight: 800; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.3px;
+  box-shadow: 0 8px 30px rgba(16,185,129,0.4);
+  transition: opacity 0.2s, transform 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.btn-checkout {
+  width: 100%; padding: 22px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white; border: none; border-radius: 20px;
+  font-size: 20px; font-weight: 800; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  box-shadow: 0 8px 30px rgba(239,68,68,0.4);
+  transition: opacity 0.2s, transform 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.btn-checkin:hover, .btn-checkout:hover  { opacity: 0.9; transform: translateY(-2px); }
+.btn-checkin:active, .btn-checkout:active { transform: scale(0.98); }
+
+.btn-done {
+  width: 100%; padding: 20px;
+  background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);
+  border: 2px solid rgba(255,255,255,0.1); border-radius: 20px;
+  font-size: 17px; font-weight: 700; text-align: center;
+  cursor: default; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── SHEETS SYNC INDICATOR ── */
+.sheets-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 12px; padding: 10px 14px; margin-top: 18px;
+  color: rgba(34,197,94,0.8); font-size: 12px; font-weight: 600;
+}
+.sheets-badge .dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; flex-shrink: 0; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+
+/* ── MESSAGE ── */
+.message {
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25);
+  color: #86efac; border-radius: 16px; padding: 16px 20px;
+  font-size: 15px; font-weight: 600; margin-bottom: 22px; text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
+
+/* ── NAV ── */
+.nav { display: flex; gap: 10px; max-width: 440px; margin: 0 auto; }
+.nav a {
+  flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5); text-decoration: none; text-align: center;
+  padding: 13px; border-radius: 16px; font-size: 13px; font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+.nav a:hover { background: rgba(255,255,255,0.1); color: white; }
+
+/* pill label */
+.pill-label {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 18px;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.pill-checkin  { background: rgba(16,185,129,0.15); color: #34d399; }
+.pill-checkout { background: rgba(239,68,68,0.15);  color: #f87171; }
+.pill-done     { background: rgba(59,130,246,0.15); color: #93c5fd; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="user-info">
+    <div class="hi">Welcome back</div>
+    <div class="nm">{{ name }}</div>
+  </div>
+  <a href="/logout" class="logout-btn">Sign out</a>
+</div>
+
+<!-- CLOCK -->
+<div class="clock-wrap">
+  <div id="clock">--:--:--</div>
+  <div class="date">{{ today }}</div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card">
+
+  {% if message %}
+  <div class="message">{{ message }}</div>
+  {% endif %}
+
+  <!-- status label -->
+  {% if next_action == 'checkin' %}
+    <span class="pill-label pill-checkin">⏳ Not checked in yet</span>
+  {% elif next_action == 'checkout' %}
+    <span class="pill-label pill-checkout">🟢 Currently checked in</span>
+  {% else %}
+    <span class="pill-label pill-done">✅ Attendance complete</span>
+  {% endif %}
+
+  <!-- time boxes -->
+  <div class="status-row">
+    <div class="stat-box in-box">
+      <div class="lbl">Check-In</div>
+      {% if record and record.check_in %}
+        <div class="val">🟢 {{ record.check_in }}</div>
+      {% else %}
+        <div class="val empty">Pending</div>
+      {% endif %}
+    </div>
+    <div class="stat-box out-box">
+      <div class="lbl">Check-Out</div>
+      {% if record and record.check_out %}
+        <div class="val">🔴 {{ record.check_out }}</div>
+      {% else %}
+        <div class="val empty">Pending</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PRIMARY ACTION BUTTON (auto-detected) -->
+  {% if next_action == 'checkin' %}
+    <form method="POST">
+      <input type="hidden" name="action" value="checkin">
+      <button type="submit" class="btn-checkin">
+        🟢 Check In Now
+      </button>
+    </form>
+
+  {% elif next_action == 'checkout' %}
+    <form method="POST">
+      <input type="hidden" name="action" value="checkout">
+      <button type="submit" class="btn-checkout">
+        🔴 Check Out Now
+      </button>
+    </form>
+
+  {% else %}
+    <div class="btn-done">🏁 Done for today! See you tomorrow.</div>
+  {% endif %}
+
+  <!-- Google Sheets sync badge -->
+  <div class="sheets-badge">
+    <div class="dot"></div>
+    Live sync to Google Sheets — data saved instantly
+  </div>
+
+</div>
+
+<!-- NAV LINKS -->
+<div class="nav">
+  <a href="/history">📊 My History</a>
+  <a href="/logout">🚪 Sign Out</a>
+</div>
+
+<script>
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false});
+}
+tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>

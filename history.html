@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Attendance History — {{ name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: #0d1117; padding: 24px 18px 60px; }
+
+.topbar { display:flex; align-items:center; justify-content:space-between; max-width:500px; margin:0 auto 20px; }
+.topbar h2 { color:white; font-size:20px; font-weight:800; }
+.back { color:rgba(255,255,255,0.4); text-decoration:none; font-size:13px; font-weight:600; }
+.back:hover { color:white; }
+
+.user-info { max-width:500px; margin:0 auto 20px; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px 18px; }
+.user-avatar { width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,#10b981,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.user-name { color:white; font-size:15px; font-weight:700; }
+.user-phone { color:rgba(255,255,255,0.35); font-size:12px; }
+
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:500px; margin:0 auto 20px; }
+.stat-box { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px 12px; text-align:center; }
+.stat-box .sv { font-size:24px; font-weight:900; color:white; }
+.stat-box .sl { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; }
+.stat-box.green { border-color:rgba(16,185,129,0.2); } .stat-box.green .sv { color:#34d399; }
+.stat-box.blue  { border-color:rgba(59,130,246,0.2);  } .stat-box.blue  .sv { color:#60a5fa; }
+.stat-box.orange{ border-color:rgba(245,158,11,0.2);  } .stat-box.orange .sv { color:#fbbf24; }
+
+.mode-toggle { max-width:500px; margin:0 auto 20px; display:flex; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:6px; }
+.mode-btn { flex:1; padding:10px; border:none; border-radius:12px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all 0.2s; color:rgba(255,255,255,0.4); background:transparent; }
+.mode-btn.active { background:linear-gradient(135deg,#10b981,#3b82f6); color:white; box-shadow:0 4px 16px rgba(16,185,129,0.3); }
+
+.search-wrap { max-width:500px; margin:0 auto 16px; position:relative; }
+.search-wrap input { width:100%; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.1); border-radius:14px; padding:13px 16px 13px 44px; font-size:14px; color:white; outline:none; font-family:'Plus Jakarta Sans',sans-serif; transition:border-color 0.2s; }
+.search-wrap input:focus { border-color:#10b981; }
+.search-wrap input::placeholder { color:rgba(255,255,255,0.2); }
+.search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none; }
+
+#list-mode  { display:block; }
+#graph-mode { display:none; }
+
+.record { max-width:500px; margin:0 auto 8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px 20px; border-left:4px solid transparent; animation:fi 0.3s ease; }
+@keyframes fi { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
+.record.full    { border-left-color:#10b981; }
+.record.partial { border-left-color:#f59e0b; }
+.record-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.record-date { font-size:14px; font-weight:700; color:white; }
+.record-badge { font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; }
+.badge-full    { background:rgba(16,185,129,0.15); color:#34d399; }
+.badge-partial { background:rgba(245,158,11,0.15); color:#fbbf24; }
+.times-row { display:flex; gap:16px; flex-wrap:wrap; }
+.time-item { font-size:13px; color:rgba(255,255,255,0.4); }
+.time-item span { font-weight:700; color:rgba(255,255,255,0.8); }
+.dur-pill { display:inline-block; margin-top:8px; font-size:11px; font-weight:700; color:#60a5fa; background:rgba(59,130,246,0.1); border-radius:20px; padding:3px 10px; }
+
+.no-results { text-align:center; padding:40px 0; color:rgba(255,255,255,0.2); font-size:14px; max-width:500px; margin:0 auto; }
+
+/* graph */
+.graph-container { max-width:500px; margin:0 auto; }
+.graph-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.graph-title { color:white; font-size:15px; font-weight:700; }
+.graph-legend { display:flex; gap:10px; }
+.legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:rgba(255,255,255,0.4); }
+.legend-dot { width:8px; height:8px; border-radius:50%; }
+
+.chart-wrap { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:20px; padding:20px 12px 12px; margin-bottom:16px; overflow-x:auto; }
+.chart-inner { display:flex; align-items:flex-end; gap:5px; height:160px; min-width:320px; }
+
+.bar-group { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; min-width:24px; cursor:pointer; }
+.bar-col { width:100%; display:flex; flex-direction:column-reverse; gap:2px; flex:1; align-items:center; justify-content:flex-start; }
+.bar { width:85%; border-radius:4px 4px 0 0; transition:opacity 0.2s; min-height:3px; }
+.bar:hover { opacity:0.75; }
+.bar-in  { background:linear-gradient(180deg,#10b981,#059669); }
+.bar-out { background:linear-gradient(180deg,#3b82f6,#2563eb); }
+.bar-nil { background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.08); height:6px !important; border-radius:3px; }
+.bar-lbl { font-size:8px; color:rgba(255,255,255,0.25); text-align:center; font-weight:600; line-height:1.2; }
+
+.tooltip { position:fixed; background:rgba(10,10,20,0.96); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 14px; font-size:12px; color:white; pointer-events:none; z-index:999; box-shadow:0 8px 32px rgba(0,0,0,0.5); display:none; min-width:160px; }
+.tt-date { font-weight:800; margin-bottom:6px; color:#60a5fa; font-size:13px; }
+.tt-row  { color:rgba(255,255,255,0.5); margin-bottom:3px; }
+.tt-row span { color:white; font-weight:700; }
+
+.dur-summary { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px 20px; }
+.dur-summary h4 { color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+.dur-row { margin-bottom:12px; }
+.dur-top { display:flex; justify-content:space-between; margin-bottom:5px; }
+.dur-top span { font-size:12px; color:rgba(255,255,255,0.5); font-weight:600; }
+.dur-top strong { font-size:12px; color:white; }
+.dur-track { height:8px; background:rgba(255,255,255,0.06); border-radius:10px; overflow:hidden; }
+.dur-fill  { height:100%; border-radius:10px; transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1); width:0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h2>📊 Attendance History</h2>
+  <a href="/scan" class="back">← Back</a>
+</div>
+
+<div class="user-info">
+  <div class="user-avatar">👤</div>
+  <div>
+    <div class="user-name">{{ name }}</div>
+    <div class="user-phone">📱 {{ phone }}</div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-box green"><div class="sv" id="s-total">0</div><div class="sl">Days Present</div></div>
+  <div class="stat-box blue"><div class="sv" id="s-complete">0</div><div class="sl">Complete</div></div>
+  <div class="stat-box orange"><div class="sv" id="s-avg">0h</div><div class="sl">Avg Hours</div></div>
+</div>
+
+<div class="mode-toggle">
+  <button class="mode-btn active" onclick="switchMode('list')" id="btn-list">📋 Day-by-Day</button>
+  <button class="mode-btn" onclick="switchMode('graph')" id="btn-graph">📊 Bar Graph</button>
+</div>
+
+<!-- LIST MODE -->
+<div id="list-mode">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search date (e.g. 2026-03-18 or 03)" oninput="filterRecords()">
+  </div>
+  <div id="records-list">
+  {% if records %}
+    {% for r in records %}
+    <div class="record {% if r.check_in and r.check_out %}full{% elif r.check_in %}partial{% endif %}"
+         data-date="{{ r.date }}">
+      <div class="record-top">
+        <div class="record-date">📅 {{ r.date }}</div>
+        {% if r.check_in and r.check_out %}
+          <span class="record-badge badge-full">✓ Complete</span>
+        {% elif r.check_in %}
+          <span class="record-badge badge-partial">⏳ Partial</span>
+        {% endif %}
+      </div>
+      <div class="times-row">
+        <div class="time-item">🟢 In: <span>{{ r.check_in or '—' }}</span></div>
+        <div class="time-item">🔴 Out: <span>{{ r.check_out or 'Pending' }}</span></div>
+      </div>
+      {% if r.check_in and r.check_out %}
+        <span class="dur-pill" data-in="{{ r.check_in }}" data-out="{{ r.check_out }}">⏱ —</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="no-results"><div style="font-size:40px;margin-bottom:12px">📋</div>No records yet.<br>Scan QR to mark attendance!</div>
+  {% endif %}
+  </div>
+  <div class="no-results" id="no-search" style="display:none">🔍 No records found for that date.</div>
+</div>
+
+<!-- GRAPH MODE -->
+<div id="graph-mode">
+  <div class="graph-container">
+    <div class="graph-header">
+      <div class="graph-title">Last 30 Days</div>
+      <div class="graph-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Present</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Duration</div>
+      </div>
+    </div>
+    <div class="chart-wrap"><div class="chart-inner" id="bar-chart"></div></div>
+    <div class="dur-summary"><h4>⏱ Average by Day of Week</h4><div id="dur-bars"></div></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-date" id="tt-d"></div>
+  <div class="tt-row">Check-In: <span id="tt-i"></span></div>
+  <div class="tt-row">Check-Out: <span id="tt-o"></span></div>
+  <div class="tt-row">Duration: <span id="tt-dur"></span></div>
+</div>
+
+<script>
+const RECORDS = [{% for r in records %}{"date":"{{ r.date }}","in":"{{ r.check_in or '' }}","out":"{{ r.check_out or '' }}"},{% endfor %}];
+
+function durSecs(i, o) {
+  if (!i || !o) return 0;
+  const p = s => s.split(':').map(Number);
+  const [ih,im,is_]=p(i), [oh,om,os_]=p(o);
+  return Math.max(0, (oh*3600+om*60+os_)-(ih*3600+im*60+is_));
+}
+function fmtDur(s) {
+  if (!s) return '—';
+  return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`;
+}
+
+// Stats
+(function(){
+  const present  = RECORDS.filter(r=>r.in).length;
+  const complete = RECORDS.filter(r=>r.in&&r.out).length;
+  const durs     = RECORDS.filter(r=>r.in&&r.out).map(r=>durSecs(r.in,r.out));
+  const avg      = durs.length ? durs.reduce((a,b)=>a+b,0)/durs.length : 0;
+  document.getElementById('s-total').textContent    = present;
+  document.getElementById('s-complete').textContent = complete;
+  document.getElementById('s-avg').textContent      = Math.round(avg/3600*10)/10+'h';
+})();
+
+// Duration pills
+document.querySelectorAll('.dur-pill').forEach(p=>{
+  const s = durSecs(p.dataset.in, p.dataset.out);
+  p.textContent = s ? '⏱ '+fmtDur(s) : '⏱ —';
+});
+
+// Search
+function filterRecords(){
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let vis = 0;
+  document.querySelectorAll('#records-list .record').forEach(c=>{
+    const show = !q || c.dataset.date.toLowerCase().includes(q);
+    c.style.display = show ? 'block' : 'none';
+    if(show) vis++;
+  });
+  document.getElementById('no-search').style.display = (q&&!vis)?'block':'none';
+}
+
+// Mode switch
+function switchMode(m){
+  document.getElementById('list-mode').style.display  = m==='list'?'block':'none';
+  document.getElementById('graph-mode').style.display = m==='graph'?'block':'none';
+  document.getElementById('btn-list').className  = 'mode-btn'+(m==='list'?' active':'');
+  document.getElementById('btn-graph').className = 'mode-btn'+(m==='graph'?' active':'');
+  if(m==='graph') buildChart();
+}
+
+// Build chart
+function buildChart(){
+  const chart = document.getElementById('bar-chart');
+  chart.innerHTML = '';
+  const tt = document.getElementById('tooltip');
+
+  // Last 30 days
+  const days = [];
+  for(let i=29;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const iso = d.toISOString().split('T')[0];
+    const rec = RECORDS.find(r=>r.date===iso)||null;
+    days.push({iso, label: iso.slice(8)+'\n'+iso.slice(5,7), rec});
+  }
+
+  const MAX_H = 130;
+  const maxS  = Math.max(...days.map(d=>d.rec?durSecs(d.rec.in,d.rec.out):0), 3600);
+
+  days.forEach(day=>{
+    const s    = day.rec ? durSecs(day.rec.in, day.rec.out) : 0;
+    const hasIn = day.rec && day.rec.in;
+
+    const grp = document.createElement('div');
+    grp.className = 'bar-group';
+
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+
+    if(!hasIn){
+      const b = document.createElement('div');
+      b.className = 'bar bar-nil'; col.appendChild(b);
+    } else {
+      if(s > 0){
+        const bOut = document.createElement('div');
+        bOut.className = 'bar bar-out';
+        bOut.style.height = Math.max(6, Math.round(s/maxS*MAX_H*0.75))+'px';
+        col.appendChild(bOut);
+      }
+      const bIn = document.createElement('div');
+      bIn.className = 'bar bar-in';
+      bIn.style.height = Math.max(8, Math.round(MAX_H*0.25))+'px';
+      col.appendChild(bIn);
+    }
+
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-lbl';
+    lbl.textContent = day.label.split('\n')[0];
+
+    grp.appendChild(col); grp.appendChild(lbl);
+
+    const show = e => {
+      tt.style.display = 'block';
+      tt.style.left = Math.min(e.clientX+12, window.innerWidth-180)+'px';
+      tt.style.top  = Math.max(e.clientY-80, 10)+'px';
+      document.getElementById('tt-d').textContent   = day.iso;
+      document.getElementById('tt-i').textContent   = day.rec?.in  || '—';
+      document.getElementById('tt-o').textContent   = day.rec?.out || '—';
+      document.getElementById('tt-dur').textContent = s ? fmtDur(s) : '—';
+    };
+    grp.addEventListener('mousemove', show);
+    grp.addEventListener('click', show);
+    grp.addEventListener('mouseleave', ()=>{ tt.style.display='none'; });
+
+    chart.appendChild(grp);
+  });
+
+  // Day of week bars
+  const durDiv = document.getElementById('dur-bars');
+  durDiv.innerHTML = '';
+  const days7 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const colors = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+  const byDay  = days7.map(()=>[]);
+  RECORDS.filter(r=>r.in&&r.out).forEach(r=>{
+    const dow = new Date(r.date).getDay(); // 0=Sun
+    const idx = dow===0?6:dow-1;
+    byDay[idx].push(durSecs(r.in,r.out));
+  });
+  const maxAvg = Math.max(...byDay.map(a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0),1);
+  days7.forEach((d,i)=>{
+    const arr = byDay[i];
+    if(!arr.length) return;
+    const avg = arr.reduce((a,b)=>a+b,0)/arr.length;
+    const pct = Math.round(avg/maxAvg*100);
+    const row = document.createElement('div');
+    row.className = 'dur-row';
+    row.innerHTML = `<div class="dur-top"><span>${d} (${arr.length}×)</span><strong>${fmtDur(avg)}</strong></div>
+      <div class="dur-track"><div class="dur-fill" style="background:${colors[i]}" data-w="${pct}%"></div></div>`;
+    durDiv.appendChild(row);
+  });
+  setTimeout(()=>{ document.querySelectorAll('.dur-fill').forEach(f=>f.style.width=f.dataset.w); },120);
+}
+</script>
+</body>
+</html>

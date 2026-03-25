@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: qr-attendance
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 2 --bind 0.0.0.0:$PORT --timeout 60 app:app
+    healthCheckPath: /health
+    envVars:
+      - key: APP_URL
+        sync: false          # fill in your Render URL after first deploy
+      - key: SECRET_KEY
+        generateValue: true  # Render auto-generates a random secret
+      - key: SHEET_NAME
+        value: Attendance System
+      - key: SMS_PROVIDER
+        value: fast2sms
+      - key: DEBUG_MODE
+        value: "false"
+      - key: FAST2SMS_KEY
+        sync: false
+      - key: GOOGLE_CREDS_JSON
+        sync: false          # paste the entire credentials.json content here

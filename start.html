@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Attendance Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:'Plus Jakarta Sans',sans-serif; min-height:100vh; background:#0d1117;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  position:relative; overflow:hidden;
+}
+body::before, body::after {
+  content:''; position:fixed; border-radius:50%; filter:blur(100px); pointer-events:none;
+}
+body::before { width:400px;height:400px;background:#10b981;opacity:.08;top:-100px;left:-100px; }
+body::after  { width:350px;height:350px;background:#3b82f6;opacity:.08;bottom:-80px;right:-80px; }
+
+.card {
+  background:rgba(255,255,255,0.04); backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.09); border-radius:32px;
+  padding:44px 36px; width:100%; max-width:390px; z-index:1;
+  box-shadow:0 32px 80px rgba(0,0,0,0.5); animation:up .4s ease;
+}
+@keyframes up { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+
+.logo { text-align:center; margin-bottom:32px; }
+.icon-ring {
+  width:80px;height:80px;border-radius:24px;margin:0 auto 16px;
+  background:linear-gradient(135deg,#10b981,#3b82f6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;box-shadow:0 8px 32px rgba(16,185,129,0.3);
+}
+.logo h1 { font-size:26px;font-weight:900;color:white;letter-spacing:-0.5px; }
+.logo p  { color:rgba(255,255,255,0.35);font-size:13px;margin-top:6px; }
+
+.how { display:flex;gap:8px;margin-bottom:28px; }
+.how-step {
+  flex:1;text-align:center;padding:14px 8px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;
+}
+.how-step .ico { font-size:20px;display:block;margin-bottom:5px; }
+
+label { display:block;color:rgba(255,255,255,0.4);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px; }
+.input-wrap { position:relative;margin-bottom:8px; }
+.input-wrap span { position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none; }
+input[type="tel"] {
+  width:100%;padding:17px 17px 17px 48px;
+  background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.1);
+  border-radius:16px;font-size:18px;font-weight:700;color:white;outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;
+}
+input[type="tel"]:focus { border-color:#10b981;background:rgba(16,185,129,0.06); }
+input[type="tel"]::placeholder { color:rgba(255,255,255,0.18);font-weight:400;font-size:15px; }
+.hint { color:rgba(255,255,255,0.2);font-size:11px;padding-left:4px;margin-bottom:22px; }
+
+.btn {
+  width:100%;padding:18px;
+  background:linear-gradient(135deg,#10b981,#3b82f6);
+  color:white;border:none;border-radius:16px;
+  font-size:17px;font-weight:800;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  box-shadow:0 6px 28px rgba(16,185,129,0.3);
+  transition:opacity .2s,transform .15s;
+}
+.btn:hover { opacity:.9;transform:translateY(-1px); }
+.btn:active { transform:scale(.98); }
+
+.error {
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  color:#fca5a5;border-radius:12px;padding:12px 16px;
+  font-size:13px;margin-bottom:20px;text-align:center;
+}
+.foot { text-align:center;margin-top:20px;color:rgba(255,255,255,0.2);font-size:12px;font-weight:600; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="icon-ring">📋</div>
+    <h1>Mark Attendance</h1>
+    <p>Enter your number — done in seconds</p>
+  </div>
+
+  <div class="how">
+    <div class="how-step"><span class="ico">📱</span>Enter phone</div>
+    <div class="how-step"><span class="ico">⚡</span>Auto mark</div>
+    <div class="how-step"><span class="ico">📊</span>Saved to Sheets</div>
+  </div>
+
+  {% if error %}<div class="error">⚠️ {{ error }}</div>{% endif %}
+
+  <form method="POST" action="/start">
+    <label>Mobile Number</label>
+    <div class="input-wrap">
+      <span>📱</span>
+      <input type="tel" name="phone" placeholder="Enter your phone number"
+             inputmode="numeric" pattern="[0-9]+" required autofocus autocomplete="tel">
+    </div>
+    <p class="hint">Registered? Just enter number — attendance marks automatically.</p>
+    <button type="submit" class="btn">⚡ Continue</button>
+  </form>
+
+  <p class="foot">🔒 New user? One-time OTP registration only.</p>
+</div>
+</body>
+</html>
